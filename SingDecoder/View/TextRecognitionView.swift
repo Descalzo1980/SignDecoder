@@ -3,8 +3,10 @@ import SwiftUI
 
 struct TextRecognitionView: View {
     let imageResource: ImageResource
+    let boundingColor = Color(red: 1.00, green: 0.00, blue: 0.85)
     @State private var textRecognizer: TextRecognizer?
-    
+
+
     var body: some View {
         VStack {
             Image(imageResource)
@@ -14,16 +16,32 @@ struct TextRecognitionView: View {
                 .task {
                     textRecognizer = await TextRecognizer(imageResource: imageResource)
                 }
+                .overlay {
+                    if let observations = textRecognizer?.observations {
+                        ForEach(observations, id: \.uuid) { observation in
+                            BoundsRect(normalizedRect: observation.boundingBox)
+                                .stroke(boundingColor, lineWidth: 3)
+                        }
+                    }
+                }
             Spacer()
             
-            TranslationView(text: textRecognizer?.recognizerText ?? "")
+            TranslationView(text: textRecognizer?.recognizedText ?? "", isProcessing: isProcessing)
         }
         .padding()
-        .navigationTitle("Sign info")
+        .trailTheme()
+        .navigationTitle("Sign Info")
+    }
+    
+    private var isProcessing: Bool {
+        textRecognizer == nil
     }
 }
 
+
 #Preview {
-    TextRecognitionView(imageResource: .sign1)
-        .navigationBarTitleDisplayMode(.inline)
+    NavigationStack {
+        TextRecognitionView(imageResource: .sign1)
+            .navigationBarTitleDisplayMode(.inline)
+    }
 }
